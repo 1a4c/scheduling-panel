@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>電性驗證智能工程系統與經濟效益</title>
+<style>
+:root{--bg:#eceff1;--panel:#fafbfb;--ink:#1b2a36;--mute:#5f7080;--line:#ccd5dc;--acc:#0e6c8a;--ok:#2f8f5b;--bad:#c4402f;--warn:#d99a1e;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121c26;--panel:#1b2a38;--ink:#e2eaf0;--mute:#8da1b2;--line:#2c4052;--acc:#4cb8d9;--ok:#4cbf83;--bad:#ef6f5e;--warn:#f0b43c;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#121c26;--panel:#1b2a38;--ink:#e2eaf0;--mute:#8da1b2;--line:#2c4052;--acc:#4cb8d9;--ok:#4cbf83;--bad:#ef6f5e;--warn:#f0b43c;color-scheme:dark}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 "Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif}
+main{max-width:1040px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:22px;margin:0 0 4px}.sub{margin:0 0 16px;color:var(--mute)}
+h2{font-size:15px;margin:0 0 8px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px;margin-bottom:14px}
+.cols{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:800px){.cols{grid-template-columns:1fr}}
+.cols .panel{margin:0}
+ul{margin:0;padding-left:18px;font-size:13.5px;color:var(--mute)}
+.map{display:grid;gap:1px;margin:8px 0}
+.map i{aspect-ratio:1;border-radius:1px;background:var(--line)}
+.map i.p{background:var(--ok)}.map i.f{background:var(--bad)}.map i.m{outline:1.5px solid var(--ink);outline-offset:-2px}
+.kv{display:flex;justify-content:space-between;font-size:13.5px;border-bottom:1px dashed var(--line);padding:3px 0}
+.kv b.ok{color:var(--ok)}.kv b.bad{color:var(--bad)}
+.inputs{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px 18px}
+label{font-size:13px;color:var(--mute);display:block}
+input[type=number]{width:100%;font:inherit;padding:6px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink)}
+button{font:inherit;padding:9px 18px;border-radius:6px;border:1px solid var(--acc);background:var(--acc);color:#fff;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:3px solid var(--warn);outline-offset:2px}
+.wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:520px;font-size:14px}
+th,td{padding:7px 10px;border-bottom:1px solid var(--line);text-align:right}
+th:first-child,td:first-child{text-align:left}
+td.g{color:var(--ok);font-weight:600}
+.big{font-size:26px;font-weight:700;color:var(--ok)}
+.note{font-size:12.5px;color:var(--mute)}
+</style>
+</head>
+<body>
+<main>
+<h1>電性驗證智能工程系統與經濟效益</h1>
+<p class="sub">把「掃描 → 量測 → 封裝完整性」三段流程接成一條自適應測試線，並用可調參數估算它值不值得做。</p>
+
+<div class="cols">
+<div class="panel"><h2>① 時序與電壓掃描</h2>
+<ul><li>timeset：設定時序邊界</li><li>V-curve：求最低工作電壓 Vmin</li><li>shmoo：電壓×週期通過圖，智能模式只量邊界區塊，其餘由鄰點推定</li></ul>
+<div id="shmoo" class="map" style="grid-template-columns:repeat(20,1fr)"></div>
+<div class="kv"><span>量測點（全掃 / 智能）</span><b id="s1"></b></div>
+<div class="kv"><span>推定誤判點</span><b id="s2"></b></div>
+<div class="kv"><span>Vmin</span><b id="s3"></b></div>
+<div class="note">黑框＝實測點，其餘為推定。</div></div>
+
+<div class="panel"><h2>② 探針與量測</h2>
+<ul><li>NI-trace：擷取接觸電阻與訊號軌跡</li><li>scribe line：用切割道測試結構先抽測，整片不良就直接跳過逐顆測試</li></ul>
+<div id="wafer" class="map" style="grid-template-columns:repeat(15,1fr)"></div>
+<div class="kv"><span>切割道抽測點</span><b id="p1"></b></div>
+<div class="kv"><span>接觸電阻平均</span><b id="p2"></b></div>
+<div class="kv"><span>判定</span><b id="p3"></b></div></div>
+
+<div class="panel"><h2>③ 封裝完整性</h2>
+<ul><li>BGA 錫球：開路／短路掃描</li><li>接地：接地連續性</li><li>氦檢漏：漏率對上限</li><li>密封：綜合判定</li></ul>
+<div style="height:8px"></div>
+<div class="kv"><span>錫球 (開路/短路)</span><b id="k1"></b></div>
+<div class="kv"><span>接地阻抗</span><b id="k2"></b></div>
+<div class="kv"><span>氦漏率（上限 5e-9）</span><b id="k3"></b></div>
+<div class="kv"><span>密封判定</span><b id="k4"></b></div></div>
+</div>
+
+<div class="panel" style="margin-top:14px"><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button id="go">重新執行一輪（隨機一顆晶粒）</button><span class="note">每按一次會抽新的製程偏移，三個面板同步更新。</span></div></div>
+
+<div class="panel"><h2>④ 排程與資源協同（批次、佇列、路徑選擇）</h2>
+<ul><li>b-batch / queue：12 個批次進佇列，3 台測試機</li><li>selecting_path：依風險與長度決定派工路徑，切割道異常的批次直接跳過</li><li>switch_OR_cached：沿用鄰近晶粒的 shmoo 邊界（快取），降低掃描點數</li><li>dispute / envelope：切割道與封裝判定不一致時，進入複測仲裁</li></ul>
+<div style="margin:10px 0 4px;font-size:13px">傳統先進先出</div><div id="g0"></div>
+<div style="margin:10px 0 4px;font-size:13px">智能派工</div><div id="g1"></div>
+<div class="kv"><span>完工時間（傳統 / 智能）</span><b id="m1"></b></div>
+<div class="kv"><span>跳過批次 / 每顆時間比</span><b id="m2"></b></div>
+<div class="kv"><span>產能提升</span><b id="m3" class="ok"></b></div>
+<div class="note">每段色塊是一個批次；智能派工把最長的批次先排，並扣掉被跳過的批次。</div></div>
+
+<div class="panel"><h2>經濟效益估算（以下皆為假設值，請換成貴廠實際數字）</h2>
+<div class="inputs" id="inp"></div>
+<div class="wrap" style="margin-top:14px"><table>
+<tr><th>每月</th><th>傳統全測</th><th>智能系統</th><th>差異</th></tr>
+<tr><td>測試時間成本</td><td id="a1"></td><td id="b1"></td><td id="c1" class="g"></td></tr>
+<tr><td>漏檢損失</td><td id="a2"></td><td id="b2"></td><td id="c2" class="g"></td></tr>
+<tr><td>合計</td><td id="a3"></td><td id="b3"></td><td id="c3" class="g"></td></tr>
+</table></div>
+<p style="margin:12px 0 0">每月節省 <span class="big" id="sv"></span>　回收期 <b id="pb"></b></p>
+<p class="note">節省 ＝ 少測的時間成本（智能掃描、整片跳過）＋ 少漏的缺陷損失（封裝端攔截）。智能掃描的量測點數取自上方模擬結果，其餘為輸入假設。</p></div>
+</main>
+<script>
+const $=i=>document.getElementById(i),NX=20,NY=12,BX=4,BY=3;
+const R=(a,b)=>a+Math.random()*(b-a);
+let smartPts=96,fullPts=NX*NY;
+function shmoo(){
+ const sh=R(-.06,.06),m=$('shmoo');m.innerHTML='';
+ const truth=(i,j)=>{const v=.6+i*.6/19,p=1+j*2/11,pm=1+1.6*Math.exp(-(v-.6)*5)+sh;return p>=pm&&v<=1.15};
+ const t=[],meas=[];for(let j=0;j<NY;j++){t[j]=[];meas[j]=[];for(let i=0;i<NX;i++)t[j][i]=truth(i,j)}
+ const get=(i,j)=>(meas[j][i]=1,t[j][i]);
+ const res=[];for(let j=0;j<NY;j++)res[j]=[];
+ for(let j0=0;j0<NY;j0+=BY)for(let i0=0;i0<NX;i0+=BX){
+  const i1=Math.min(i0+BX,NX-1),j1=Math.min(j0+BY,NY-1);
+  const c=[get(i0,j0),get(i1,j0),get(i0,j1),get(i1,j1)];
+  const same=c.every(x=>x===c[0]);
+  for(let j=j0;j<=j1;j++)for(let i=i0;i<=i1;i++)res[j][i]=same&&!meas[j][i]?c[0]:get(i,j)}
+ let n=0,e=0,vmin=9;
+ for(let j=NY-1;j>=0;j--)for(let i=0;i<NX;i++){
+  if(meas[j][i])n++;if(res[j][i]!==t[j][i])e++;if(t[j][i]&&.6+i*.6/19<vmin)vmin=.6+i*.6/19;
+  const d=document.createElement('i');d.className=(res[j][i]?'p':'f')+(meas[j][i]?' m':'');m.appendChild(d)}
+ smartPts=n;$('s1').textContent=fullPts+' / '+n;$('s2').textContent=e+' 點';
+ $('s2').className=e?'bad':'ok';$('s3').textContent=vmin<9?vmin.toFixed(2)+' V':'無通過點'}
+function probe(){
+ const w=$('wafer');w.innerHTML='';const bad=Math.random()<.35;const edge=R(.02,bad?.25:.08);
+ for(let j=0;j<15;j++)for(let i=0;i<15;i++){const d=Math.hypot(i-7,j-7);const x=document.createElement('i');
+  if(d>7.2){x.style.visibility='hidden'}else{const f=Math.random()<edge*(d>5?2.2:1);x.className=f?'f':'p'}w.appendChild(x)}
+ const sites=[...w.children].filter(x=>x.style.visibility!=='hidden');
+ const pick=sites.sort(()=>Math.random()-.5).slice(0,9);pick.forEach(x=>x.classList.add('m'));
+ const fails=pick.filter(x=>x.classList.contains('f')).length;
+ $('p1').textContent=pick.length+' 點，'+fails+' 點異常';$('p2').textContent=R(.8,2.4).toFixed(2)+' Ω';
+ const skip=fails>=3;$('p3').textContent=skip?'整片跳過逐顆測試':'進入逐顆測試';$('p3').className=skip?'bad':'ok'}
+function pkg(){
+ const o=Math.random()<.08?1:0,s=Math.random()<.05?1:0,g=R(.05,.6),he=Math.pow(10,R(-10,-8)),
+ gb=g>.5,hb=he>5e-9;
+ $('k1').textContent=o+' / '+s;$('k1').className=o+s?'bad':'ok';
+ $('k2').textContent=g.toFixed(2)+' Ω';$('k2').className=gb?'bad':'ok';
+ $('k3').textContent=he.toExponential(1);$('k3').className=hb?'bad':'ok';
+ const ok=!(o+s||gb||hb);$('k4').textContent=ok?'合格':'不合格，攔截';$('k4').className=ok?'ok':'bad'}
+const P=[['wafers','每月晶圓數',5000],['dpw','每片晶粒數',600],['yld','良率 %',92],['sec','每顆其餘測試秒數',1.5],['pt','每個掃描點秒數',.012],['rate','機台成本 NT$/秒',.08],['scrap','整片不良比例 %（切割道可攔截）',3],['esc','傳統漏檢率 %',.2],['cut','智能降低漏檢 %',60],['loss','單顆漏檢損失 NT$',1000],['hit','快取命中率 %（沿用鄰近晶粒邊界）',40],['rt','爭議複測比例 %',2],['inv','系統導入成本 NT$',3000000]];
+const v={};P.forEach(([k,l,d])=>{v[k]=d;const e=document.createElement('label');e.innerHTML=l+'<input type="number" step="any" value="'+d+'" id="i_'+k+'">';$('inp').appendChild(e);e.querySelector('input').oninput=ev=>{v[k]=+ev.target.value||0;econ()}});
+const f=x=>'NT$ '+Math.round(x).toLocaleString();
+function econ(){
+ const dies=v.wafers*v.dpw,T0=fullPts*v.pt+v.sec,T1=smartPts*(1-v.hit/100)*v.pt+v.sec+v.rt/100*T0;
+ const c0=dies*T0*v.rate,c1=dies*(1-v.scrap/100)*T1*v.rate;
+ const e0=dies*v.yld/100*v.esc/100*v.loss,e1=e0*(1-v.cut/100);
+ $('a1').textContent=f(c0);$('b1').textContent=f(c1);$('c1').textContent=f(c0-c1);
+ $('a2').textContent=f(e0);$('b2').textContent=f(e1);$('c2').textContent=f(e0-e1);
+ $('a3').textContent=f(c0+e0);$('b3').textContent=f(c1+e1);$('c3').textContent=f(c0+e0-c1-e1);
+ const s=c0+e0-c1-e1;$('sv').textContent=f(s);$('pb').textContent=s>0?(v.inv/s).toFixed(1)+' 個月':'無法回收';sched()}
+let lots=[];
+function genLots(){lots=[];for(let i=0;i<12;i++)lots.push({t:R(60,120),risk:Math.random()<Math.min(.5,v.scrap*5/100)})}
+function pack(a){const m=[0,0,0],b=[[],[],[]];a.forEach(t=>{const i=m.indexOf(Math.min(...m));b[i].push([m[i],t]);m[i]+=t});return{ms:Math.max(...m),b}}
+function gantt(id,p,scale){const el=$(id);el.innerHTML='';p.b.forEach(r=>{const d=document.createElement('div');d.style.cssText='position:relative;height:14px;margin-bottom:3px;background:var(--bg);border-radius:3px';r.forEach(([s,t],k)=>{const x=document.createElement('div');x.style.cssText='position:absolute;top:0;bottom:0;border-radius:2px;border-right:1px solid var(--panel);background:'+(k%2?'var(--acc)':'var(--ok)')+';left:'+s/scale*100+'%;width:'+t/scale*100+'%';d.appendChild(x)});el.appendChild(d)})}
+function sched(){
+ const T0=fullPts*v.pt+v.sec,T1=smartPts*(1-v.hit/100)*v.pt+v.sec+v.rt/100*T0,k=T1/T0;
+ const a=pack(lots.map(l=>l.t));
+ const keep=lots.filter(l=>!l.risk).map(l=>l.t*k).sort((x,y)=>y-x);
+ const b=pack(keep),sc=Math.max(a.ms,b.ms);
+ gantt('g0',a,sc);gantt('g1',b,sc);
+ $('m1').textContent=(a.ms/60).toFixed(1)+' / '+(b.ms/60).toFixed(1)+' 小時';
+ $('m2').textContent=(12-keep.length)+' 批 / '+(k*100).toFixed(0)+'%';
+ $('m3').textContent=a.ms>0?((a.ms/b.ms-1)*100).toFixed(0)+'%':'–'}
+function run(){shmoo();probe();pkg();genLots();econ()}
+$('go').onclick=run;run();
+</script>
+</body>
+</html>
